@@ -129,7 +129,11 @@
     <ClCompile Include="shared.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="resource.h" />
     <ClInclude Include="shared.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="viscape.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
