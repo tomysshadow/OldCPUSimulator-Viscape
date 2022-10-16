@@ -26,11 +26,11 @@ INT WINAPI WinMain(HINSTANCE instance, HINSTANCE previousInstance, PSTR commandL
 		if (!CloseHandle(applicationMutex)) {
 			showLastError("Failed to Close Handle");
 			result = -2;
-			goto error3;
+			goto error4;
 		}
 
 		applicationMutex = NULL;
-		error3:
+		error4:
 		if (result) {
 			return result;
 		}
@@ -59,8 +59,12 @@ INT WINAPI WinMain(HINSTANCE instance, HINSTANCE previousInstance, PSTR commandL
 		if (!CloseHandle(oldCPUSimulatorCommandLineFile)) {
 			showLastError("Failed to Close Handle");
 			result = -1;
+			goto error3;
 		}
 
+		oldCPUSimulatorCommandLineFile = NULL;
+
+		error3:
 		if (result) {
 			return result;
 		}
