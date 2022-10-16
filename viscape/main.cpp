@@ -46,11 +46,24 @@ INT WINAPI WinMain(HINSTANCE instance, HINSTANCE previousInstance, PSTR commandL
 	const DWORD OLD_CPU_SIMULATOR_COMMAND_LINE_SIZE = 8192;
 	CHAR oldCPUSimulatorCommandLine[OLD_CPU_SIMULATOR_COMMAND_LINE_SIZE] = "";
 
-	DWORD numberOfBytesRead = 0;
+	{
+		int result = 0;
 
-	if (!ReadFile(oldCPUSimulatorCommandLineFile, oldCPUSimulatorCommandLine, OLD_CPU_SIMULATOR_COMMAND_LINE_SIZE - 1, &numberOfBytesRead, NULL)) {
-		showLastError("Failed to Read File");
-		return -1;
+		DWORD numberOfBytesRead = 0;
+
+		if (!ReadFile(oldCPUSimulatorCommandLineFile, oldCPUSimulatorCommandLine, OLD_CPU_SIMULATOR_COMMAND_LINE_SIZE - 1, &numberOfBytesRead, NULL)) {
+			showLastError("Failed to Read File");
+			result = -1;
+		}
+
+		if (!CloseHandle(oldCPUSimulatorCommandLineFile)) {
+			showLastError("Failed to Close Handle");
+			result = -1;
+		}
+
+		if (result) {
+			return result;
+		}
 	}
 
 	std::string oldCPUSimulatorViscapeCommandLine = std::string(oldCPUSimulatorCommandLine) + " " + std::string(commandLine);
