@@ -3,11 +3,11 @@
 #include <windows.h>
 
 INT WINAPI WinMain(HINSTANCE instance, HINSTANCE previousInstance, PSTR commandLine, INT commandShow) {
+	int result = 0;
+
 	HANDLE applicationMutex = CreateMutex(NULL, FALSE, "Old CPU Simulator");
 
 	if (applicationMutex && applicationMutex != INVALID_HANDLE_VALUE) {
-		int result = 0;
-
 		if (GetLastError() == ERROR_ALREADY_EXISTS) {
 			// times out after 10 seconds to prevent hang in event of failure
 			DWORD wait = WaitForSingleObject(applicationMutex, 10000);
@@ -26,11 +26,12 @@ INT WINAPI WinMain(HINSTANCE instance, HINSTANCE previousInstance, PSTR commandL
 		if (!CloseHandle(applicationMutex)) {
 			showLastError("Failed to Close Handle");
 			result = -2;
-			goto error4;
+			goto error5;
 		}
 
 		applicationMutex = NULL;
-		error4:
+
+		error5:
 		if (result) {
 			return result;
 		}
@@ -40,91 +41,89 @@ INT WINAPI WinMain(HINSTANCE instance, HINSTANCE previousInstance, PSTR commandL
 	
 	if (!oldCPUSimulatorCommandLineFile || oldCPUSimulatorCommandLineFile == INVALID_HANDLE_VALUE) {
 		showLastError("Failed to Create File");
-		return -1;
+		result = -1;
+		goto error;
 	}
 
 	const DWORD OLD_CPU_SIMULATOR_COMMAND_LINE_SIZE = 8192;
 	CHAR oldCPUSimulatorCommandLine[OLD_CPU_SIMULATOR_COMMAND_LINE_SIZE] = "";
 
-	{
-		int result = 0;
+	DWORD numberOfBytesRead = 0;
 
-		DWORD numberOfBytesRead = 0;
-
-		if (!ReadFile(oldCPUSimulatorCommandLineFile, oldCPUSimulatorCommandLine, OLD_CPU_SIMULATOR_COMMAND_LINE_SIZE - 1, &numberOfBytesRead, NULL)) {
-			showLastError("Failed to Read File");
-			result = -1;
-		}
-
-		if (!CloseHandle(oldCPUSimulatorCommandLineFile)) {
-			showLastError("Failed to Close Handle");
-			result = -1;
-			goto error3;
-		}
-
-		oldCPUSimulatorCommandLineFile = NULL;
-
-		error3:
-		if (result) {
-			return result;
-		}
+	if (!ReadFile(oldCPUSimulatorCommandLineFile, oldCPUSimulatorCommandLine, OLD_CPU_SIMULATOR_COMMAND_LINE_SIZE - 1, &numberOfBytesRead, NULL)) {
+		showLastError("Failed to Read File");
+		result = -1;
 	}
 
-	std::string oldCPUSimulatorViscapeCommandLine = std::string(oldCPUSimulatorCommandLine) + " " + std::string(commandLine);
-
-	int result = -1;
-
-	SIZE_T _oldCPUSimulatorViscapeCommandLineSize = oldCPUSimulatorViscapeCommandLine.size() + 1;
-	LPSTR _oldCPUSimulatorViscapeCommandLine = new CHAR[_oldCPUSimulatorViscapeCommandLineSize];
-
-	if (!_oldCPUSimulatorViscapeCommandLine) {
-		showLastError("Failed to Allocate oldCPUSimulatorViscapeCommandLine");
-		return -1;
+	if (!CloseHandle(oldCPUSimulatorCommandLineFile)) {
+		showLastError("Failed to Close Handle");
+		result = -1;
+		goto error4;
 	}
 
-	if (strncpy_s(_oldCPUSimulatorViscapeCommandLine, _oldCPUSimulatorViscapeCommandLineSize, oldCPUSimulatorViscapeCommandLine.c_str(), _oldCPUSimulatorViscapeCommandLineSize)) {
-		showLastError("Failed to Copy String");
-		goto error;
+	oldCPUSimulatorCommandLineFile = NULL;
+
+	error4:
+	if (result) {
+		return result;
 	}
 
 	{
-		STARTUPINFO startupInfo = {};
-		startupInfo.cb = sizeof(startupInfo);
+		result = -1;
 
-		PROCESS_INFORMATION processInformation = {};
+		std::string oldCPUSimulatorViscapeCommandLine = std::string(oldCPUSimulatorCommandLine) + " " + std::string(commandLine);
 
-		// create the processHandle, fail if we can't
-		if (!CreateProcess(NULL, _oldCPUSimulatorViscapeCommandLine, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &startupInfo, &processInformation)) {
-			showLastError("Failed to Create Process");
+		SIZE_T _oldCPUSimulatorViscapeCommandLineSize = oldCPUSimulatorViscapeCommandLine.size() + 1;
+		LPSTR _oldCPUSimulatorViscapeCommandLine = new CHAR[_oldCPUSimulatorViscapeCommandLineSize];
+
+		if (!_oldCPUSimulatorViscapeCommandLine) {
+			showLastError("Failed to Allocate oldCPUSimulatorViscapeCommandLine");
 			goto error;
 		}
 
-		result = 0;
+		if (strncpy_s(_oldCPUSimulatorViscapeCommandLine, _oldCPUSimulatorViscapeCommandLineSize, oldCPUSimulatorViscapeCommandLine.c_str(), _oldCPUSimulatorViscapeCommandLineSize)) {
+			showLastError("Failed to Copy String");
+			goto error2;
+		}
 
-		if (processInformation.hProcess) {
-			if (!CloseHandle(processInformation.hProcess)) {
-				showLastError("Failed to Close Handle");
-				result = -1;
+		{
+			STARTUPINFO startupInfo = {};
+			startupInfo.cb = sizeof(startupInfo);
+
+			PROCESS_INFORMATION processInformation = {};
+
+			// create the processHandle, fail if we can't
+			if (!CreateProcess(NULL, _oldCPUSimulatorViscapeCommandLine, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &startupInfo, &processInformation)) {
+				showLastError("Failed to Create Process");
 				goto error2;
 			}
 
-			processInformation.hProcess = NULL;
-		}
+			if (processInformation.hProcess) {
+				if (!CloseHandle(processInformation.hProcess)) {
+					showLastError("Failed to Close Handle");
+					goto error3;
+				}
 
-		error2:
-		if (processInformation.hThread) {
-			if (!CloseHandle(processInformation.hThread)) {
-				showLastError("Failed to Close Handle");
-				result = -1;
-				goto error;
+				processInformation.hProcess = NULL;
 			}
 
-			processInformation.hThread = NULL;
+			error3:
+			if (processInformation.hThread) {
+				if (!CloseHandle(processInformation.hThread)) {
+					showLastError("Failed to Close Handle");
+					goto error2;
+				}
+
+				processInformation.hThread = NULL;
+			}
 		}
+
+		result = 0;
+		error2:
+		delete[] _oldCPUSimulatorViscapeCommandLine;
+		_oldCPUSimulatorViscapeCommandLine = NULL;
+		_oldCPUSimulatorViscapeCommandLineSize = 0;
 	}
 	error:
-	delete[] _oldCPUSimulatorViscapeCommandLine;
-	_oldCPUSimulatorViscapeCommandLine = NULL;
-	_oldCPUSimulatorViscapeCommandLineSize = 0;
 	return result;
 }
