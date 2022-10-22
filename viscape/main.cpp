@@ -2,6 +2,8 @@
 #include <string>
 #include <windows.h>
 
+static LPCSTR OLD_CPU_SIMULATOR_COMMAND_LINE_PATH = "OldCPUSimulator_commandLine.txt";
+
 INT WINAPI WinMain(HINSTANCE instance, HINSTANCE previousInstance, PSTR commandLine, INT commandShow) {
 	int result = 0;
 
@@ -37,7 +39,7 @@ INT WINAPI WinMain(HINSTANCE instance, HINSTANCE previousInstance, PSTR commandL
 		}
 	}
 
-	HANDLE oldCPUSimulatorCommandLineFile = CreateFile("OldCPUSimulator_commandLine.txt", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE oldCPUSimulatorCommandLineFile = CreateFile(OLD_CPU_SIMULATOR_COMMAND_LINE_PATH, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	
 	if (!oldCPUSimulatorCommandLineFile || oldCPUSimulatorCommandLineFile == INVALID_HANDLE_VALUE) {
 		showLastError("Failed to Create File");
