@@ -1,1 +1,1 @@
-"..\OldCPUSimulator\OldCPUSimulator.exe" -t 300 --set-process-priority-high --set-synced-process-affinity-one --synced-process-main-thread-only --refresh-rate-floor-fifteen -sw "OLDCPUSIMULATOR_VISCAPE.EXE"
+"..\OldCPUSimulator\OldCPUSimulator.exe" -t 300 -ph -a1 -mt -rf -sw "OLDCPUSIMULATOR_VISCAPE.EXE"
