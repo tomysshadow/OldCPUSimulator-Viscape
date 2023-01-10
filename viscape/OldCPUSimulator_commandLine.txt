@@ -1,0 +1,1 @@
+"..\OldCPUSimulator\OldCPUSimulator.exe" -t 300 -ph -a1 -mt -rf -sw "OLDCPUSIMULATOR_VISCAPE.EXE"
